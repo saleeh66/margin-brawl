@@ -273,6 +273,8 @@ const PAGE = `<!DOCTYPE html>
   .center button{background:none;border:1.5px solid rgba(237,231,212,.3);color:inherit;font:inherit;
                  font-size:9.5px;padding:5px 9px;border-radius:6px;letter-spacing:.08em}
   #ping{font-size:9px;opacity:.5}
+  #build{position:absolute;left:6px;bottom:5px;z-index:6;font-size:9px;letter-spacing:.08em;
+         color:#5A5750;opacity:.5;pointer-events:none}
   #hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:9;max-width:80%;
         background:#2B2820;color:#EDE7D4;font-size:11px;line-height:1.5;padding:9px 13px;border-radius:8px;
         text-align:center;opacity:0;transition:opacity .25s;pointer-events:none}
@@ -323,8 +325,10 @@ const PAGE = `<!DOCTYPE html>
     </div>
     <button class="go hide" id="again">Run it back</button>
     <button class="go hide" id="share" style="background:#5A5750;box-shadow:3px 4px 0 #3B372E">Share this game</button>
+    <button class="go hide" id="faceVeil" style="background:#B02A21;box-shadow:3px 4px 0 #7d1c16">Use my face</button>
   </div>
   <div id="hint"></div>
+  <div id="build">build 3 · faces</div>
 </div>
 
 <div id="pads">
@@ -679,7 +683,7 @@ function connect(){
   ws.onopen = () => { net = 'open'; attempts = 0; if (isFile) store('brawl.server', serverAddr); sendInput(); };
   ws.onclose = () => {
     ws = null; snap = null; mySlot = 0; attempts++;
-    faceA = faceB = null; faceBtn.classList.add('hide');
+    faceA = faceB = null; faceBtn.classList.add('hide'); faceVeilBtn.classList.add('hide');
     net = 'retry';
     whoEl.textContent = 'no server';
     document.body.classList.remove('p1', 'p2');
@@ -694,7 +698,8 @@ function connect(){
       document.body.classList.toggle('p1', mySlot === 1);
       document.body.classList.toggle('p2', mySlot === 2);
       whoEl.textContent = mySlot === 1 ? 'you are P1' : mySlot === 2 ? 'you are P2' : 'watching';
-      faceBtn.classList.toggle('hide', !mySlot);
+      if (!mySlot) showHint('Both player slots are taken. Close the game on any other phone or tab, then reload here.', 7000);
+      faceBtn.classList.remove('hide');
       if (mySlot && myFaceData) applyMyFace(myFaceData);
     }
     else if (m.type === 'room') roomState = m;
@@ -835,7 +840,9 @@ function applyMyFace(b64){
 }
 
 const faceBtn = document.getElementById('faceBtn'), faceInput = document.getElementById('faceInput');
+const faceVeilBtn = document.getElementById('faceVeil');
 faceBtn.addEventListener('click', () => faceInput.click());
+faceVeilBtn.addEventListener('click', () => faceInput.click());
 faceInput.addEventListener('change', async e => {
   const file = e.target.files && e.target.files[0];
   faceInput.value = '';
@@ -892,12 +899,14 @@ function updateVeil(){
              : 'Type the address the server printed.',
       '', true);
     addrBox.classList.remove('hide'); againBtn.classList.add('hide'); shareBtn.classList.add('hide');
+    faceVeilBtn.classList.add('hide');
     whoEl.textContent = 'no server';
     return;
   }
   if (net === 'connecting'){
     setVeil('Margin<em>Brawl</em>', 'Connecting<span class="dots"></span>', wsURL(), false);
     addrBox.classList.add('hide'); againBtn.classList.add('hide'); shareBtn.classList.add('hide');
+    faceVeilBtn.classList.add('hide');
     return;
   }
   if (net === 'retry'){
@@ -920,6 +929,7 @@ function updateVeil(){
       'room ' + room, false);
     addrBox.classList.add('hide'); againBtn.classList.add('hide');
     shareBtn.classList.toggle('hide', !alone || isFile);
+    faceVeilBtn.classList.toggle('hide', !mySlot);
     return;
   }
   if (snap.ph === 'match'){
@@ -928,7 +938,7 @@ function updateVeil(){
     setVeil(mySlot ? (youWon ? 'You keep<em>the page</em>' : 'Out of<em>ink</em>')
                    : (won1 ? 'Player 1<em>keeps the page</em>' : 'Player 2<em>keeps the page</em>'),
             'Final tally ' + snap.w1 + ' – ' + snap.w2 + '.', '', false);
-    addrBox.classList.add('hide'); shareBtn.classList.add('hide');
+    addrBox.classList.add('hide'); shareBtn.classList.add('hide'); faceVeilBtn.classList.add('hide');
     if (mySlot){
       againBtn.classList.remove('hide');
       const mine = roomState.rematch[mySlot - 1];
@@ -938,7 +948,7 @@ function updateVeil(){
     return;
   }
   veil.classList.add('hide');
-  againBtn.classList.add('hide'); shareBtn.classList.add('hide');
+  againBtn.classList.add('hide'); shareBtn.classList.add('hide'); faceVeilBtn.classList.add('hide');
   againBtn.disabled = false; againBtn.textContent = 'Run it back';
 }
 
