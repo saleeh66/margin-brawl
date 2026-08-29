@@ -1,0 +1,16 @@
+{
+  // Margin Brawl — Cloudflare config. Upload this next to brawl-v3.js.
+  "name": "margin-brawl",
+  "main": "brawl-v3.js",
+  "compatibility_date": "2026-08-01",
+
+  // one Arena per room code; the Arena runs the fight
+  "durable_objects": {
+    "bindings": [{ "name": "ARENA", "class_name": "Arena" }]
+  },
+  "exports": {
+    "Arena": { "type": "durable-object", "storage": "sqlite" }
+  },
+
+  "observability": { "enabled": true }
+}
